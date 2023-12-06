@@ -1,7 +1,5 @@
 // Store our API endpoint as queryUrl.
 let queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
-let boundariesUrl = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json"
-
 
 // Perform a GET request to the query URL/
 d3.json(queryUrl).then(function (data) {
@@ -27,15 +25,8 @@ function createFeatures(earthquakeData) {
   // Define a function that we want to run once for each feature in the features array.
   // Give each feature a popup that describes the place and time of the earthquake.
   function onEachFeature(feature, layer) {
-    // layer.on({
-    //   click : function(event){
-    //     myMap.fitBounds(event.target.getBounds());
-    //   }
-    // });
-
     layer.bindPopup(`<h3>Location: ${feature.properties.place}</h3><hr><p>Date: ${new Date(feature.properties.time)}</p><p>Magnitude: ${feature.properties.mag}</p><p>Depth: ${feature.geometry.coordinates[2]}</p>`);
   }
-
 
   // Create a GeoJSON layer that contains the features array on the earthquakeData object.
   // Run the onEachFeature function once for each piece of data in the array.
@@ -55,40 +46,16 @@ function createFeatures(earthquakeData) {
   createMap(earthquakes);
 }
 
+
+
 function createMap(earthquakes) {
   // Create the base layers.
-  let street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  let grayscale = L.tileLayer('https://api.mapbox.com/styles/v1/{style}/tiles/{z}/{x}/{y}?access_token={access_token}', {
+    attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
+    style:    'mapbox/light-v11',
+    access_token: access_token
   });
-  let topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-  attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-});
 
-
-  // Create layer for tectonic plates.
-  let tectonics = L.layerGroup();
-  d3.json(boundariesUrl).then(function(data){
-    console.log(data);
-    L.geoJSON(data,{
-        color: 'orange',
-        weight: 2
-    }).addTo(tectonics)
-  })
-
-
-  // Create a baseMaps object.
-  let baseMaps = {
-    'Street Map': street,
-    'Satellite': topo,
-    // 'Grayscale': grayscale,
-    // 'Outdoors': outdoors
-  };
-
-  // Create an overlay object to hold our overlay.
-  let overlayMaps = {
-    'Earthquakes': earthquakes,
-    'Tectonic Plates': tectonics,
-  };
 
   // Create our map, giving it the streetmap and earthquakes layers to display on load.
   let myMap = L.map("map", {
@@ -96,7 +63,7 @@ function createMap(earthquakes) {
       37.09, -95.71
     ],
     zoom: 5,
-    layers: [street, earthquakes, tectonics]
+    layers: [grayscale, earthquakes]
   });
 
 
@@ -129,12 +96,5 @@ function createMap(earthquakes) {
   // Adding the legend to the map
   legend.addTo(myMap);
 
-
-  // Create a layer control.
-  // Pass it our baseMaps and overlayMaps.
-  // Add the layer control to the map.
-  L.control.layers(baseMaps, overlayMaps, {
-    collapsed: false
-  }).addTo(myMap);
 }
 
